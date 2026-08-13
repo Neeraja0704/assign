@@ -176,8 +176,14 @@ def tester_node(state: CrewState):
 
 
 def manager_node(state: CrewState):
+    """Manager state: approve and return the final answer."""
+
     answer = state.get("developer_output", "")
-    return {"manager_output": answer, "final_output": answer}
+
+    return {
+        "manager_output": answer,
+        "final_output": answer,
+    }
 
 
 workflow = StateGraph(CrewState)
@@ -212,15 +218,29 @@ def format_for_graph(x):
 
 
 def format_graph_output(state):
-    if not isinstance(state, dict):
-        return str(state)
-    final_output = state.get("final_output")
-    if final_output and str(final_output).strip():
-        return str(final_output)
-    manager_output = state.get("manager_output")
-    if manager_output and str(manager_output).strip():
-        return str(manager_output)
-    return "No output was generated."
+    print("DEBUG FINAL STATE:", state)
+
+    if state is None:
+        return "No output was generated."
+
+    # LangGraph normally returns a dictionary-like state
+    if isinstance(state, dict):
+        # Try final output first
+        output = state.get("final_output")
+        if output:
+            return str(output)
+
+        # Then manager output
+        output = state.get("manager_output")
+        if output:
+            return str(output)
+
+        # Then developer output as fallback
+        output = state.get("developer_output")
+        if output:
+            return str(output)
+
+    return str(state)
 
 
 formatted_agent_chain = (
